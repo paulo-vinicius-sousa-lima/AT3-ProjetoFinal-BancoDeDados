@@ -1,4 +1,8 @@
-package ucb.hospital.cli;
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ */
+
+package ucb.hospital.at3.projetofinal.bancodedados;
 
 /**
  *
