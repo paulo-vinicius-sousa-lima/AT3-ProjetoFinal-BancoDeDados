@@ -4,10 +4,6 @@
  */
 package ucb.sistema.control;
 
-/**
- *
- * @author raiane.souza
- */
-public class SistemaServico {
+public class RepositorioDePaciente {
     
 }

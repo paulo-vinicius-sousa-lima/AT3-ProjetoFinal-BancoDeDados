@@ -4,10 +4,6 @@
 
 package ucb.sistema.cli;
 
-/**
- *
- * @author pedro
- */
 public class SistemaHospital {
 
     public static void main(String[] args) {
