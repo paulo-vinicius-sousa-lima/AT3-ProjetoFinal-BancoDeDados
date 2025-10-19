@@ -295,11 +295,12 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
 
     @Override
     public void excluir(int idPaciente) throws Exception {
-        throw new UnsupportedOperationException("A exclusão por ID_paciente não é suportada diretamente pelo modelo de banco de dados. Use excluirPorCpf.");
-    }
-    
-    public void excluirPorCpf(String cpf) throws Exception {
         Connection conexao = null;
+        PreparedStatement psBuscaCpf = null;
+        PreparedStatement psExclusao = null;
+        ResultSet rs = null;
+        String cpfPaciente = null;
+        
         PreparedStatement psPaciente = null;
         PreparedStatement psPessoa = null;
         PreparedStatement psTelefone = null;
@@ -309,30 +310,46 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
         try {
             conexao = conexaoBD.obterConexao();
             conexao.setAutoCommit(false); 
-                        
+            
+            String sqlBuscaCpf = "SELECT " + PESSOA_CPF + " FROM " + NOME_TABELA_PACIENTE + " WHERE " + ID_PACIENTE + " = ?";
+            psBuscaCpf = conexao.prepareStatement(sqlBuscaCpf);
+            psBuscaCpf.setInt(1, idPaciente);
+            rs = psBuscaCpf.executeQuery();
+
+            if (rs.next()) {
+                cpfPaciente = rs.getString(PESSOA_CPF);
+            }
+            
+            if (rs != null) rs.close();
+            if (psBuscaCpf != null) psBuscaCpf.close();
+
+            if (cpfPaciente == null) {
+                throw new Exception("Paciente com ID " + idPaciente + " não encontrado.");
+            }
+
             String sqlPaciente = "DELETE FROM " + NOME_TABELA_PACIENTE + " WHERE " + PESSOA_CPF + "=?";
             psPaciente = conexao.prepareStatement(sqlPaciente);
-            psPaciente.setString(1, cpf);
+            psPaciente.setString(1, cpfPaciente);
             psPaciente.executeUpdate();
 
             String sqlTelefone = "DELETE FROM " + NOME_TABELA_TELEFONE + " WHERE " + PESSOA_CPF + "=?";
             psTelefone = conexao.prepareStatement(sqlTelefone);
-            psTelefone.setString(1, cpf);
+            psTelefone.setString(1, cpfPaciente);
             psTelefone.executeUpdate();
             
             String sqlEmail = "DELETE FROM " + NOME_TABELA_EMAIL + " WHERE " + PESSOA_CPF + "=?";
             psEmail = conexao.prepareStatement(sqlEmail);
-            psEmail.setString(1, cpf);
+            psEmail.setString(1, cpfPaciente);
             psEmail.executeUpdate();
             
             String sqlEndereco = "DELETE FROM " + NOME_TABELA_ENDERECO + " WHERE " + PESSOA_CPF + "=?";
             psEndereco = conexao.prepareStatement(sqlEndereco);
-            psEndereco.setString(1, cpf);
+            psEndereco.setString(1, cpfPaciente);
             psEndereco.executeUpdate();
 
             String sqlPessoa = "DELETE FROM " + NOME_TABELA_PESSOA + " WHERE " + CPF + "=?";
             psPessoa = conexao.prepareStatement(sqlPessoa);
-            psPessoa.setString(1, cpf);
+            psPessoa.setString(1, cpfPaciente);
             psPessoa.executeUpdate();
 
             conexao.commit();
@@ -341,6 +358,8 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
             if (conexao != null) conexao.rollback(); 
             throw new Exception("Erro de acesso a dados ao excluir paciente: " + e.getMessage(), e);
         } finally {
+            if (rs != null) rs.close();
+            if (psBuscaCpf != null) psBuscaCpf.close();
             if (psPaciente != null) psPaciente.close();
             if (psPessoa != null) psPessoa.close();
             if (psTelefone != null) psTelefone.close();
@@ -349,4 +368,5 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
             conexaoBD.fecharConexao(conexao);
         }
     }
+  
 }
