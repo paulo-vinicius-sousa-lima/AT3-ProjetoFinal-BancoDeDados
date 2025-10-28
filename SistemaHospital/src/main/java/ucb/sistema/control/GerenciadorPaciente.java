@@ -5,7 +5,6 @@
 package ucb.sistema.control;
 
 import ucb.sistema.model.Paciente;
-import ucb.sistema.model.Pessoa;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -134,9 +133,9 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
         
             String sql = "SELECT p." + NOME + ", p." + CPF + ", p." + DATA_NASCIMENTO + ", " +
                      "pac." + ID_PACIENTE + ", pac." + CONVENIO + ", pac." + PRIORIDADE + ", " +
-                     "t.numero AS telefone_num, " + // <--- CORRIGIDO AQUI
+                     "t.numero AS telefone_num, " +
                      "e.email, " +
-                     "ed.cidade, ed.numero AS endereco_num, ed.rua " + // Alias para número de endereço
+                     "ed.cidade, ed.numero AS endereco_num, ed.rua " + 
                      "FROM " + NOME_TABELA_PESSOA + " p " +
                      "INNER JOIN " + NOME_TABELA_PACIENTE + " pac ON p." + CPF + " = pac." + PESSOA_CPF + " " +
                      "LEFT JOIN " + NOME_TABELA_TELEFONE + " t ON p." + CPF + " = t." + PESSOA_CPF + " " +
@@ -186,7 +185,7 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
 
              String sql = "SELECT p." + NOME + ", p." + CPF + ", p." + DATA_NASCIMENTO + ", " +
                          "pac." + ID_PACIENTE + ", pac." + CONVENIO + ", pac." + PRIORIDADE + ", " +
-                         "t.numero AS telefone_num, " +  // <--- CORRIGIDO AQUI
+                         "t.numero AS telefone_num, " +  
                          "e.email, " +
                          "ed.cidade, ed.numero AS endereco_num, ed.rua " + 
                          "FROM " + NOME_TABELA_PESSOA + " p " +

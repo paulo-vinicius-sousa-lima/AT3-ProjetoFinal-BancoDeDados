@@ -19,15 +19,55 @@ public class SistemaHospital {
 
     private static GerenciadorPaciente gerenciador = new GerenciadorPaciente(); 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static Scanner sc = new Scanner(System.in); 
+
 
     public static void main(String[] args) {
         System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
         
-        Scanner sc = new Scanner(System.in);
-        
+        menuPrincipal();
+        sc.close();
+    }
+    
+    public static void menuPrincipal() {
         while(true) {
             try { 
-                System.out.println("\n=== SISTEMA HOSPITALAR ===");
+                System.out.println("\n=============================");
+                System.out.println("=== SISTEMA HOSPITALAR ===");
+                System.out.println("=============================");
+                System.out.println("1 - Acessar como ADMINISTRADOR");
+                System.out.println("2 - Acessar como MÉDICO");
+                System.out.println("3 - Sair do sistema");
+                System.out.print("Escolha o perfil de acesso: ");
+                
+                int opcao = sc.nextInt();
+                sc.nextLine(); 
+
+                System.out.println();
+                
+                switch (opcao) {
+                    case 1 -> menuAdministrador(); 
+                    case 2 -> System.out.println("Acesso como MÉDICO selecionado. Funcionalidade ainda não implementada.");
+                    case 3 -> { 
+                        System.out.println("Finalizando o sistema...");
+                        return; 
+                    }
+                    default -> System.out.println("Opção inválida! Tente novamente.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Erro: Entrada inválida. Por favor, digite apenas números para a opção.");
+                sc.nextLine(); 
+            } catch (Exception e) {
+                System.err.println("ERRO INESPERADO: " + e.getMessage());
+            }
+        }
+    }
+    
+    public static void menuAdministrador() {
+        boolean rodando = true;
+        while(rodando) {
+            try { 
+                System.out.println("\n=== PERFIL: ADMINISTRADOR ===");
                 System.out.println("1 - Cadastrar paciente");
                 System.out.println("2 - Consultar paciente (por CPF)");
                 System.out.println("3 - Listar pacientes");
@@ -206,7 +246,6 @@ public class SistemaHospital {
                     }
                     case 6 -> { 
                         System.out.println("Finalizando o sistema...");
-                        sc.close();
                         return;
                     }
 
