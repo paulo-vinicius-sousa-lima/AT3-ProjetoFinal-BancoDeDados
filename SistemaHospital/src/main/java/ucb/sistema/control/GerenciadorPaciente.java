@@ -19,6 +19,7 @@ import ucb.sistema.dao.ConexaoMySQL;
 public class GerenciadorPaciente implements RepositorioDePacientes {
     private final ConexaoBD conexaoBD;
     
+    // Constantes com nomes de tabelas e colunas do banco de dados
     private static final String NOME_TABELA_PESSOA = "pessoa";
     private static final String NOME_TABELA_PACIENTE = "paciente";
     private static final String NOME_TABELA_ENDERECO = "endereco";
@@ -35,12 +36,14 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
     private static final String CONVENIO = "convenio"; 
     private static final String PRIORIDADE = "prioridade";
     
+    // Construtor define o tipo de conexão com o banco
     public GerenciadorPaciente() {
         this.conexaoBD = new ConexaoMySQL(); 
     }
 
     @Override
     public void cadastrar(Paciente paciente) throws Exception {
+       // Validação básica do CPF
        if (paciente.getCpf() == null || paciente.getCpf().length() != 11) {
             throw new IllegalArgumentException("O CPF deve ter 11 dígitos.");
         }
@@ -54,13 +57,15 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
         ResultSet rsPessoa = null; 
         
         try {
+            // Impede o cadastro de CPF duplicado
             if (buscarPorCpf(paciente.getCpf()) != null) {
                 throw new Exception("Já existe um paciente cadastrado com este CPF.");
             }
             
             conexao = conexaoBD.obterConexao();
-            conexao.setAutoCommit(false); 
+            conexao.setAutoCommit(false); // Início da transação
             
+            // Inserção dos dados na tabela "pessoa"
             String sqlPessoa = "INSERT INTO " + NOME_TABELA_PESSOA + " (" + NOME + ", " + CPF + ", " + DATA_NASCIMENTO + ") VALUES (?, ?, ?)";
             psPessoa = conexao.prepareStatement(sqlPessoa);
             
@@ -69,7 +74,8 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
             psPessoa.setObject(3, paciente.getDataNascimento());
             
             psPessoa.executeUpdate();
-
+            
+            // Inserção dos dados específicos de paciente
             String sqlPaciente = "INSERT INTO " + NOME_TABELA_PACIENTE + " (" + CONVENIO + ", " + PRIORIDADE + ", " + PESSOA_CPF + ") VALUES (?, ?, ?)";
             psPaciente = conexao.prepareStatement(sqlPaciente, Statement.RETURN_GENERATED_KEYS);
             
@@ -77,7 +83,8 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
             psPaciente.setString(2, paciente.getPrioridade());
             psPaciente.setString(3, paciente.getCpf()); 
             psPaciente.executeUpdate();
-
+            
+            // Recupera o ID gerado automaticamente
             ResultSet rsPaciente = psPaciente.getGeneratedKeys();
             if (rsPaciente.next()) {
                 int idPacienteGerado = rsPaciente.getInt(1);
@@ -85,18 +92,21 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
             }
             rsPaciente.close();
             
+             // Inserção do telefone
             String sqlTelefone = "INSERT INTO " + NOME_TABELA_TELEFONE + " (" + "numero" + ", " + PESSOA_CPF + ") VALUES (?, ?)";
             psTelefone = conexao.prepareStatement(sqlTelefone);
             psTelefone.setString(1, paciente.getTelefone());
             psTelefone.setString(2, paciente.getCpf());
             psTelefone.executeUpdate();
-
+            
+             // Inserção do email
             String sqlEmail = "INSERT INTO " + NOME_TABELA_EMAIL + " (" + "email" + ", " + PESSOA_CPF + ") VALUES (?, ?)";
             psEmail = conexao.prepareStatement(sqlEmail);
             psEmail.setString(1, paciente.getEmail());
             psEmail.setString(2, paciente.getCpf());
             psEmail.executeUpdate();
             
+            // Inserção do Endereco
             String sqlEndereco = "INSERT INTO " + NOME_TABELA_ENDERECO + " (" + "rua" + ", " + "cidade" + ", " + "numero" + ", " + PESSOA_CPF + ") VALUES (?, ?, ?, ?)";
             psEndereco = conexao.prepareStatement(sqlEndereco);
             psEndereco.setString(1, paciente.getRua());
@@ -106,12 +116,13 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
             psEndereco.executeUpdate();
 
 
-            conexao.commit(); 
+            conexao.commit(); // Confirma todas as inserções
             
         } catch (SQLException e) {
-            if (conexao != null) conexao.rollback(); 
+            if (conexao != null) conexao.rollback(); // Reverte se der erro
             throw new Exception("Erro de acesso a dados ao cadastrar paciente: " + e.getMessage(), e);
         } finally {
+            // Libera recursos da memória
             if (rsPessoa != null) rsPessoa.close();
             if (psPessoa != null) psPessoa.close();
             if (psPaciente != null) psPaciente.close();
@@ -130,7 +141,8 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
 
         try {
             conexao = conexaoBD.obterConexao();
-        
+            
+            // Consulta completa com joins para buscar dados pessoais e complementares
             String sql = "SELECT p." + NOME + ", p." + CPF + ", p." + DATA_NASCIMENTO + ", " +
                      "pac." + ID_PACIENTE + ", pac." + CONVENIO + ", pac." + PRIORIDADE + ", " +
                      "t.numero AS telefone_num, " +
@@ -146,7 +158,8 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
             ps = conexao.prepareStatement(sql);
             ps.setString(1, cpf);
             rs = ps.executeQuery();
-
+            
+            // Se encontrar, monta o objeto Paciente completo
             if (rs.next()) {
                 Paciente p = new Paciente(
                     rs.getString("nome"), 
@@ -182,7 +195,8 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
 
         try {
             conexao = conexaoBD.obterConexao();
-
+            
+             // Retorna todos os pacientes com seus dados associados
              String sql = "SELECT p." + NOME + ", p." + CPF + ", p." + DATA_NASCIMENTO + ", " +
                          "pac." + ID_PACIENTE + ", pac." + CONVENIO + ", pac." + PRIORIDADE + ", " +
                          "t.numero AS telefone_num, " +  
@@ -226,6 +240,7 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
 
     @Override
     public void atualizar(Paciente paciente) throws Exception {
+        // Garante que o paciente exista antes de atualizar
         if (paciente.getIdPaciente() <= 0) {
             throw new IllegalArgumentException("ID do paciente inválido para atualização.");
         }
@@ -241,13 +256,15 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
             conexao = conexaoBD.obterConexao();
             conexao.setAutoCommit(false); 
             
+            // Atualiza informações básicas da pessoa
             String sqlPessoa = "UPDATE " + NOME_TABELA_PESSOA + " SET " + NOME + "=? WHERE " + CPF + "=?";
             psPessoa = conexao.prepareStatement(sqlPessoa);
             
             psPessoa.setString(1, paciente.getNome());
             psPessoa.setString(2, paciente.getCpf());
             psPessoa.executeUpdate();
-
+            
+            // Atualiza dados específicos do paciente
             String sqlPaciente = "UPDATE " + NOME_TABELA_PACIENTE + " SET " + CONVENIO + "=?, " + PRIORIDADE + "=? WHERE " + PESSOA_CPF + "=?";
             psPaciente = conexao.prepareStatement(sqlPaciente);
             
@@ -256,6 +273,7 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
             psPaciente.setString(3, paciente.getCpf());
             psPaciente.executeUpdate();
             
+            // Atualiza telefone, e-mail e endereço
             String sqlTelefone = "UPDATE " + NOME_TABELA_TELEFONE + " SET " + "numero" + "=? WHERE " + PESSOA_CPF + "=?";
             psTelefone = conexao.prepareStatement(sqlTelefone);
             psTelefone.setString(1, paciente.getTelefone());
@@ -310,6 +328,7 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
             conexao = conexaoBD.obterConexao();
             conexao.setAutoCommit(false); 
             
+             // Busca o CPF antes de excluir, pois é chave nas demais tabelas
             String sqlBuscaCpf = "SELECT " + PESSOA_CPF + " FROM " + NOME_TABELA_PACIENTE + " WHERE " + ID_PACIENTE + " = ?";
             psBuscaCpf = conexao.prepareStatement(sqlBuscaCpf);
             psBuscaCpf.setInt(1, idPaciente);
@@ -325,7 +344,8 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
             if (cpfPaciente == null) {
                 throw new Exception("Paciente com ID " + idPaciente + " não encontrado.");
             }
-
+            
+            // Exclui registros relacionados em todas as tabelas
             String sqlPaciente = "DELETE FROM " + NOME_TABELA_PACIENTE + " WHERE " + PESSOA_CPF + "=?";
             psPaciente = conexao.prepareStatement(sqlPaciente);
             psPaciente.setString(1, cpfPaciente);
@@ -351,12 +371,13 @@ public class GerenciadorPaciente implements RepositorioDePacientes {
             psPessoa.setString(1, cpfPaciente);
             psPessoa.executeUpdate();
 
-            conexao.commit();
+            conexao.commit(); // Finaliza exclusão em cascata
             
         } catch (SQLException e) {
             if (conexao != null) conexao.rollback(); 
             throw new Exception("Erro de acesso a dados ao excluir paciente: " + e.getMessage(), e);
         } finally {
+             // Fecha todos os recursos
             if (rs != null) rs.close();
             if (psBuscaCpf != null) psBuscaCpf.close();
             if (psPaciente != null) psPaciente.close();
